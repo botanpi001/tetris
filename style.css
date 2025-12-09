@@ -44,7 +44,8 @@ body {
     /* Horizontal layout */
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
+    padding: 5px;
+    /* Minimal padding */
 }
 
 /* Columns */
@@ -55,11 +56,17 @@ body {
     justify-content: flex-end;
     /* Align buttons to bottom */
     align-items: center;
-    width: 20%;
-    /* Reduced width for side columns */
-    min-width: 70px;
+
+    /* Fixed Width Strategy to prevent overlap */
+    width: 90px;
+    min-width: 90px;
+    flex-shrink: 0;
+    /* Do not shrink below 90px */
+
     height: 100%;
     padding-bottom: 20px;
+    z-index: 10;
+    /* Ensure above board if anything weird happens */
 }
 
 .col-center {
@@ -67,16 +74,18 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 60%;
-    /* Increased width for game board */
+
+    /* Take remaining space */
+    flex-grow: 1;
+    width: auto;
     height: 100%;
+    position: relative;
 }
 
 .control-stack {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    /* Reduced gap */
     align-items: center;
     width: 100%;
 }
@@ -88,11 +97,17 @@ body {
     border-radius: 4px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     background: rgba(0, 0, 0, 0.8);
-    max-height: 85vh;
-    /* Increased max height */
-    aspect-ratio: 1/2;
-    width: auto;
+
+    /* Responsive sizing */
+    width: 100%;
     height: 100%;
+    max-height: 90vh;
+    /* Leave some vertical space */
+    max-width: 45vh;
+    /* Aspect ratio constraint (1:2) */
+
+    /* Center it */
+    margin: 0 auto;
 }
 
 #game-canvas {
@@ -102,8 +117,8 @@ body {
     background-image:
         linear-gradient(var(--grid-line-color) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-line-color) 1px, transparent 1px);
-    background-size: 5% 2.5%;
-    /* Approximate grid size */
+    background-size: 10% 5%;
+    /* 10x20 grid */
 }
 
 /* Score Display */
@@ -115,6 +130,8 @@ body {
     color: var(--accent-color);
     text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
     z-index: 5;
+    pointer-events: none;
+    /* Let clicks pass through */
 }
 
 /* Panels (Hold/Next) */
@@ -125,6 +142,8 @@ body {
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 5px;
+    width: 80px;
+    /* Fit within 90px col */
 }
 
 .panel-box h2 {
@@ -157,13 +176,20 @@ body {
     box-shadow: none;
 }
 
+/* Hold Panel Button Style */
 .panel-btn {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     padding: 5px;
-    width: 70px;
+    width: 80px;
     height: auto;
     border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.panel-btn h2 {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-bottom: 2px;
 }
 
 .secondary-btn {
@@ -178,24 +204,24 @@ body {
 
 /* Preschooler Friendly Colors & Sizes */
 .move-btn {
-    width: 70px;
-    height: 70px;
+    width: 75px;
+    height: 75px;
     background: #00bfff;
     /* Deep Sky Blue */
     border: 3px solid #009acd;
 }
 
 .drop-btn {
-    width: 70px;
-    height: 70px;
+    width: 75px;
+    height: 75px;
     background: #ff4500;
     /* Orange Red */
     border: 3px solid #cd3700;
 }
 
 .rot-btn {
-    width: 65px;
-    height: 65px;
+    width: 70px;
+    height: 70px;
     background: #32cd32;
     /* Lime Green */
     border: 3px solid #228b22;
@@ -213,7 +239,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10;
+    z-index: 20;
     transition: opacity 0.3s ease;
 }
 
@@ -238,8 +264,19 @@ body {
     border-radius: 30px;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 600px) {
+/* Responsive Adjustments for very small screens */
+@media (max-width: 360px) {
+
+    .col-left,
+    .col-right {
+        width: 70px;
+        min-width: 70px;
+    }
+
+    .panel-box,
+    .panel-btn {
+        width: 65px;
+    }
 
     .move-btn,
     .drop-btn {
@@ -250,19 +287,5 @@ body {
     .rot-btn {
         width: 55px;
         height: 55px;
-    }
-
-    .col-left,
-    .col-right {
-        width: 22%;
-    }
-
-    .col-center {
-        width: 56%;
-    }
-
-    #game-canvas {
-        width: 100%;
-        height: 100%;
     }
 }
