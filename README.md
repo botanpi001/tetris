@@ -23,6 +23,24 @@ npx serve .
 
 コマンド実行後に表示されるURL（例: `http://localhost:3000`）をブラウザで開いてください。
 
+### 方法3: GitHub Pages (オンラインで遊ぶ)
+このリポジトリはGitHub Pagesに対応しています。
+設定が完了していれば、以下のURLからブラウザだけで遊ぶことができます。
+
+`https://botanpi001.github.io/tetris/`
+
+### 方法4: Node.jsサーバーとして実行 (server.js)
+本格的なサーバーとして実行したい場合は、以下のコマンドを使用します。
+
+```bash
+npm start
+```
+または
+```bash
+node server.js
+```
+これにより、`http://localhost:3000` でサーバーが起動します。
+
 ## 操作方法
 
 - **移動**: 矢印キー（← / →）
