@@ -123,33 +123,22 @@ export class Renderer {
         });
     }
 
-    drawBlock(ctx, x, y, color) {
-        ctx.fillStyle = color;
-        ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-
-        // Inner bevel/highlight for "rich" look
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, 4);
-        ctx.fillRect(x * this.cellSize, y * this.cellSize, 4, this.cellSize);
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(x * this.cellSize, (y + 1) * this.cellSize - 4, this.cellSize, 4);
-        ctx.fillRect((x + 1) * this.cellSize - 4, y * this.cellSize, 4, this.cellSize);
-    }
-
     drawNextQueue(queue) {
         this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
+        const previewCellSize = 15; // Smaller size for preview
+
         queue.forEach((type, index) => {
             const shape = SHAPES[type];
             const color = COLORS[type];
-            // Center the piece in the preview box
-            const offsetX = (100 / this.cellSize - shape[0].length) / 2;
-            const offsetY = index * 3 + 1;
+            // Center the piece in the preview box (width 60)
+            const pieceWidth = shape[0].length * previewCellSize;
+            const offsetX = (this.nextCanvas.width - pieceWidth) / 2;
+            const offsetY = index * 4 * previewCellSize + 10; // Spacing
 
             shape.forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (value) {
-                        this.drawBlock(this.nextCtx, offsetX + x, offsetY + y, color);
+                        this.drawBlock(this.nextCtx, x, y, color, previewCellSize, offsetX, offsetY);
                     }
                 });
             });
@@ -160,17 +149,41 @@ export class Renderer {
         this.holdCtx.clearRect(0, 0, this.holdCanvas.width, this.holdCanvas.height);
         if (!type) return;
 
+        const previewCellSize = 15; // Smaller size for preview
         const shape = SHAPES[type];
         const color = COLORS[type];
-        const offsetX = (100 / this.cellSize - shape[0].length) / 2;
-        const offsetY = 1;
+
+        const pieceWidth = shape[0].length * previewCellSize;
+        const pieceHeight = shape.length * previewCellSize;
+
+        const offsetX = (this.holdCanvas.width - pieceWidth) / 2;
+        const offsetY = (this.holdCanvas.height - pieceHeight) / 2;
 
         shape.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value) {
-                    this.drawBlock(this.holdCtx, offsetX + x, offsetY + y, color);
+                    this.drawBlock(this.holdCtx, x, y, color, previewCellSize, offsetX, offsetY);
                 }
             });
         });
+    }
+
+    // Updated drawBlock to accept custom size and offset
+    drawBlock(ctx, x, y, color, size = this.cellSize, offsetX = 0, offsetY = 0) {
+        const drawX = offsetX + x * size;
+        const drawY = offsetY + y * size;
+
+        ctx.fillStyle = color;
+        ctx.fillRect(drawX, drawY, size, size);
+
+        // Inner bevel/highlight for "rich" look
+        const bevel = Math.max(1, size / 8); // Scale bevel
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(drawX, drawY, size, bevel);
+        ctx.fillRect(drawX, drawY, bevel, size);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(drawX, drawY + size - bevel, size, bevel);
+        ctx.fillRect(drawX + size - bevel, drawY, bevel, size);
     }
 }

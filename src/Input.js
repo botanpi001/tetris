@@ -35,7 +35,7 @@ export class Input {
         bindButton('btn-left', () => this.game.moveLeft());
         bindButton('btn-right', () => this.game.moveRight());
         bindButton('btn-down', () => this.game.softDrop());
-        bindButton('btn-rot-l', () => this.game.rotateLeft());
+        bindButton('btn-hard-drop', () => this.game.hardDrop());
         bindButton('btn-rot-r', () => this.game.rotateRight());
         bindButton('btn-hold', () => { });
         bindButton('btn-pause', () => { });
