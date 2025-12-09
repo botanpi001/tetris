@@ -1,0 +1,19 @@
+{
+    "name": "tetris-game",
+    "version": "1.0.0",
+    "description": "A rich Tetris game built with HTML5 Canvas and JavaScript.",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "keywords": [
+        "tetris",
+        "game",
+        "javascript"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.18.2"
+    }
+}
