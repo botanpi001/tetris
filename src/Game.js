@@ -270,242 +270,111 @@ export class Game {
                     }
                 }
             }
+            this.score += points;
+
+            document.getElementById('score').innerText = this.score;
+            document.getElementById('lines').innerText = this.lines;
         }
-        return false;
-    }
 
-    lockPiece() {
-        // Check T-Spin before locking
-        const tSpin = this.checkTSpin();
+        updateLevel() {
+            this.level = Math.floor(this.lines / 10) + 1;
+            document.getElementById('level').innerText = this.level;
 
-        this.activePiece.shape.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value !== 0) {
-                    const boardY = this.activePiece.y + y;
-                    const boardX = this.activePiece.x + x;
-                    if (boardY >= 0) {
-                        this.grid[boardY][boardX] = this.activePiece.color;
-                    }
+            // Speed up gravity
+            this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 100);
+            // Simple linear speedup for now, can use standard curve later
+        }
+
+        update(deltaTime) {
+            if (this.isPaused || this.isGameOver) return;
+
+            this.dropCounter += deltaTime;
+            if (this.dropCounter > this.dropInterval) {
+                this.activePiece.y++;
+                if (this.checkCollision()) {
+                    this.activePiece.y--;
+                    // Touched ground
+                } else {
+                    this.dropCounter = 0;
                 }
-            });
-        });
-
-        this.checkLines(tSpin);
-        this.spawnPiece();
-    }
-
-    checkTSpin() {
-        if (this.activePiece.type !== 'T') return false;
-        if (this.lastAction !== 'rotate') return false;
-
-        let corners = 0;
-        // Check 4 corners relative to center (1, 1) of the 3x3 box
-        const offsets = [
-            [0, 0], [2, 0],
-            [0, 2], [2, 2]
-        ];
-
-        offsets.forEach(([x, y]) => {
-            const boardX = this.activePiece.x + x;
-            const boardY = this.activePiece.y + y;
-            if (boardX < 0 || boardX >= 10 || boardY >= 20 || (boardY >= 0 && this.grid[boardY][boardX] !== 0)) {
-                corners++;
-            }
-        });
-
-        return corners >= 3;
-    }
-
-    /**
-     * Single Player Game Logic
-     * Note: This game runs entirely client-side. Multiple users on the same URL
-     * play independent instances of the game. No multiplayer synchronization.
-     */
-    checkLines(tSpin) {
-        let linesCleared = 0;
-        const rowsToClear = [];
-
-        // Pass 1: Identify full rows
-        for (let y = 0; y < this.rows; y++) {
-            if (this.grid[y].every(cell => cell !== 0)) {
-                rowsToClear.push(y);
-            }
-        }
-
-        // Use this.grid.length if this.rows is not defined on Game instance (it's on Renderer)
-        // Actually Game constructor defines grid as Array(20), so length is 20.
-        // Let's use this.grid loop safely.
-    }
-
-    // RE-WRITING checkLines correctly below to replace the existing one
-    checkLines(tSpin) {
-        // Identify full rows first
-        const fullRowIndices = [];
-        this.grid.forEach((row, y) => {
-            if (row.every(cell => cell !== 0)) {
-                fullRowIndices.push(y);
-            }
-        });
-
-        const linesCleared = fullRowIndices.length;
-
-        if (linesCleared > 0) {
-            // Effects
-            fullRowIndices.forEach(y => {
-                for (let x = 0; x < 10; x++) {
-                    this.renderer.createParticles(x, y, '#ffffff', 10);
-                }
-            });
-
-            // Rebuild grid: Keep non-full rows
-            const newGrid = this.grid.filter((row, index) => !fullRowIndices.includes(index));
-
-            // Add new empty rows at the top
-            while (newGrid.length < 20) {
-                newGrid.unshift(Array(10).fill(0));
             }
 
-            this.grid = newGrid;
-
-            this.lines += linesCleared;
-            this.updateScore(linesCleared, tSpin);
-            this.updateLevel();
-        } else if (tSpin) {
-            // T-Spin with no lines
-            this.updateScore(0, tSpin);
-        }
-    }
-
-    updateScore(linesCleared, tSpin) {
-        let points = 0;
-        let text = "";
-        let color = "#ffffff";
-
-        if (tSpin) {
-            const tSpinPoints = [400, 800, 1200, 1600];
-            points = tSpinPoints[linesCleared] * this.level;
-            text = linesCleared > 0 ? `T-SPIN ${["SINGLE", "DOUBLE", "TRIPLE"][linesCleared - 1]}` : "T-SPIN";
-            color = "#a000f0";
-        } else {
-            const basePoints = [0, 100, 300, 500, 800];
-            points = basePoints[linesCleared] * this.level;
-            if (linesCleared === 4) {
-                text = "TETRIS";
-                color = "#00f0ff";
-            } else if (linesCleared > 0) {
-                text = ["", "SINGLE", "DOUBLE", "TRIPLE"][linesCleared];
-            }
-        }
-
-        if (text) {
-            this.renderer.createFloatingText(this.activePiece.x + 1, this.activePiece.y, text, color);
-        }
-
-        this.score += points;
-
-        document.getElementById('score').innerText = this.score;
-        document.getElementById('lines').innerText = this.lines;
-    }
-
-    updateLevel() {
-        this.level = Math.floor(this.lines / 10) + 1;
-        document.getElementById('level').innerText = this.level;
-
-        // Speed up gravity
-        this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 100);
-        // Simple linear speedup for now, can use standard curve later
-    }
-
-    update(deltaTime) {
-        if (this.isPaused || this.isGameOver) return;
-
-        this.dropCounter += deltaTime;
-        if (this.dropCounter > this.dropInterval) {
+            // Lock Delay Logic
+            // Check if piece is on ground
             this.activePiece.y++;
-            if (this.checkCollision()) {
-                this.activePiece.y--;
-                // Touched ground
+            const onGround = this.checkCollision();
+            this.activePiece.y--;
+
+            if (onGround) {
+                if (!this.isLocking) {
+                    this.isLocking = true;
+                    this.lockTimer = 0;
+                }
+                this.lockTimer += deltaTime;
+                if (this.lockTimer > this.lockDelay) {
+                    this.lockPiece();
+                }
             } else {
-                this.dropCounter = 0;
+                this.isLocking = false;
             }
         }
 
-        // Lock Delay Logic
-        // Check if piece is on ground
-        this.activePiece.y++;
-        const onGround = this.checkCollision();
-        this.activePiece.y--;
-
-        if (onGround) {
-            if (!this.isLocking) {
-                this.isLocking = true;
-                this.lockTimer = 0;
-            }
-            this.lockTimer += deltaTime;
-            if (this.lockTimer > this.lockDelay) {
-                this.lockPiece();
-            }
-        } else {
-            this.isLocking = false;
-        }
-    }
-
-    getGhostY() {
-        const ghost = this.activePiece.clone();
-        while (true) {
-            ghost.y++;
-            // Check collision for ghost
-            let collision = false;
-            for (let y = 0; y < ghost.shape.length; y++) {
-                for (let x = 0; x < ghost.shape[y].length; x++) {
-                    if (ghost.shape[y][x] !== 0) {
-                        const boardX = ghost.x + x;
-                        const boardY = ghost.y + y;
-                        if (boardX < 0 || boardX >= 10 || boardY >= 20 || (boardY >= 0 && this.grid[boardY][boardX] !== 0)) {
-                            collision = true;
-                            break;
+        getGhostY() {
+            const ghost = this.activePiece.clone();
+            while (true) {
+                ghost.y++;
+                // Check collision for ghost
+                let collision = false;
+                for (let y = 0; y < ghost.shape.length; y++) {
+                    for (let x = 0; x < ghost.shape[y].length; x++) {
+                        if (ghost.shape[y][x] !== 0) {
+                            const boardX = ghost.x + x;
+                            const boardY = ghost.y + y;
+                            if (boardX < 0 || boardX >= 10 || boardY >= 20 || (boardY >= 0 && this.grid[boardY][boardX] !== 0)) {
+                                collision = true;
+                                break;
+                            }
                         }
                     }
+                    if (collision) break;
                 }
-                if (collision) break;
-            }
-            if (collision) {
-                ghost.y--;
-                return ghost.y;
+                if (collision) {
+                    ghost.y--;
+                    return ghost.y;
+                }
             }
         }
-    }
 
-    draw() {
-        this.renderer.clear();
-        this.renderer.drawGrid(this.grid);
+        draw() {
+            this.renderer.clear();
+            this.renderer.drawGrid(this.grid);
 
-        // Draw Ghost Piece
-        const ghostY = this.getGhostY();
-        const ghostPiece = this.activePiece.clone();
-        ghostPiece.y = ghostY;
-        ghostPiece.color = 'rgba(255, 255, 255, 0.2)'; // Semi-transparent white
-        this.renderer.drawTetromino(ghostPiece);
+            // Draw Ghost Piece
+            const ghostY = this.getGhostY();
+            const ghostPiece = this.activePiece.clone();
+            ghostPiece.y = ghostY;
+            ghostPiece.color = 'rgba(255, 255, 255, 0.2)'; // Semi-transparent white
+            this.renderer.drawTetromino(ghostPiece);
 
-        this.renderer.drawTetromino(this.activePiece);
-        this.renderer.drawNextQueue(this.nextQueue);
-        this.renderer.drawHoldPiece(this.holdPieceType);
-    }
-
-    loop(time = 0) {
-        try {
-            const deltaTime = time - this.lastTime;
-            this.lastTime = time;
-
-            this.update(deltaTime);
-            this.draw();
-        } catch (error) {
-            console.error("Game Loop Error:", error);
-            // Attempt to recover by not stopping the loop, 
-            // but maybe we should reset lastTime to avoid huge delta
-            this.lastTime = performance.now();
+            this.renderer.drawTetromino(this.activePiece);
+            this.renderer.drawNextQueue(this.nextQueue);
+            this.renderer.drawHoldPiece(this.holdPieceType);
         }
 
-        requestAnimationFrame(this.loop);
+        loop(time = 0) {
+            try {
+                const deltaTime = time - this.lastTime;
+                this.lastTime = time;
+
+                this.update(deltaTime);
+                this.draw();
+            } catch (error) {
+                console.error("Game Loop Error:", error);
+                // Attempt to recover by not stopping the loop, 
+                // but maybe we should reset lastTime to avoid huge delta
+                this.lastTime = performance.now();
+            }
+
+            requestAnimationFrame(this.loop);
+        }
     }
-}
