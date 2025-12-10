@@ -42,11 +42,76 @@ body {
     display: flex;
     flex-direction: row;
     /* Horizontal layout */
-    background-image:
-        linear-gradient(var(--grid-line-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line-color) 1px, transparent 1px);
-    background-size: 10% 5%;
-    /* 10x20 grid */
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px;
+}
+
+/* Columns */
+.col-left,
+.col-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+
+    /* Robust Fixed Width */
+    flex: 0 0 90px;
+    width: 90px;
+
+    height: 100%;
+    padding-bottom: 20px;
+    z-index: 10;
+}
+
+.col-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    /* Fill remaining space */
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.control-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+/* Game Board */
+.game-board-wrapper {
+    position: relative;
+    /* Silver Border & Stylish Background */
+    border: 2px solid silver;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+    background: linear-gradient(to bottom, #1a1a40, #0d0d20);
+
+    /* Responsive sizing: Fill width but maintain aspect ratio */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 2;
+    /* Enforce 1:2 ratio */
+
+    /* Constraints */
+    max-height: 95vh;
+    max-width: 47.5vh;
+
+    /* Center it */
+    margin: 0 auto;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 /* Score Display */
@@ -59,7 +124,6 @@ body {
     text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
     z-index: 5;
     pointer-events: none;
-    /* Let clicks pass through */
 }
 
 /* Panels (Hold/Next) */
@@ -71,7 +135,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 5px;
     width: 80px;
-    /* Fit within 90px col */
 }
 
 .panel-box h2 {
@@ -135,7 +198,6 @@ body {
     width: 75px;
     height: 75px;
     background: #00bfff;
-    /* Deep Sky Blue */
     border: 3px solid #009acd;
 }
 
@@ -143,7 +205,6 @@ body {
     width: 75px;
     height: 75px;
     background: #ff4500;
-    /* Orange Red */
     border: 3px solid #cd3700;
 }
 
@@ -151,7 +212,6 @@ body {
     width: 70px;
     height: 70px;
     background: #32cd32;
-    /* Lime Green */
     border: 3px solid #228b22;
 }
 
@@ -215,5 +275,37 @@ body {
     .rot-btn {
         width: 55px;
         height: 55px;
+    }
+}
+
+/* Responsive Adjustments for Mobile */
+@media (max-width: 600px) {
+
+    .col-left,
+    .col-right {
+        flex: 0 0 70px;
+        /* Reduce width */
+        width: 70px;
+    }
+
+    .panel-box,
+    .panel-btn {
+        width: 65px;
+    }
+
+    .move-btn,
+    .drop-btn {
+        width: 60px;
+        height: 60px;
+    }
+
+    .rot-btn {
+        width: 55px;
+        height: 55px;
+    }
+
+    .secondary-btn {
+        width: 50px;
+        font-size: 0.6rem;
     }
 }
