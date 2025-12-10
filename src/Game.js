@@ -270,111 +270,200 @@ export class Game {
                     }
                 }
             }
-            this.score += points;
-
-            document.getElementById('score').innerText = this.score;
-            document.getElementById('lines').innerText = this.lines;
         }
+        return false;
+    }
 
-        updateLevel() {
-            this.level = Math.floor(this.lines / 10) + 1;
-            document.getElementById('level').innerText = this.level;
-
-            // Speed up gravity
-            this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 100);
-            // Simple linear speedup for now, can use standard curve later
-        }
-
-        update(deltaTime) {
-            if (this.isPaused || this.isGameOver) return;
-
-            this.dropCounter += deltaTime;
-            if (this.dropCounter > this.dropInterval) {
-                this.activePiece.y++;
-                if (this.checkCollision()) {
-                    this.activePiece.y--;
-                    // Touched ground
-                } else {
-                    this.dropCounter = 0;
-                }
-            }
-
-            // Lock Delay Logic
-            // Check if piece is on ground
-            this.activePiece.y++;
-            const onGround = this.checkCollision();
-            this.activePiece.y--;
-
-            if (onGround) {
-                if (!this.isLocking) {
-                    this.isLocking = true;
-                    this.lockTimer = 0;
-                }
-                this.lockTimer += deltaTime;
-                if (this.lockTimer > this.lockDelay) {
-                    this.lockPiece();
-                }
-            } else {
-                this.isLocking = false;
-            }
-        }
-
-        getGhostY() {
-            const ghost = this.activePiece.clone();
-            while (true) {
-                ghost.y++;
-                // Check collision for ghost
-                let collision = false;
-                for (let y = 0; y < ghost.shape.length; y++) {
-                    for (let x = 0; x < ghost.shape[y].length; x++) {
-                        if (ghost.shape[y][x] !== 0) {
-                            const boardX = ghost.x + x;
-                            const boardY = ghost.y + y;
-                            if (boardX < 0 || boardX >= 10 || boardY >= 20 || (boardY >= 0 && this.grid[boardY][boardX] !== 0)) {
-                                collision = true;
-                                break;
-                            }
-                        }
+    lockPiece() {
+        this.activePiece.shape.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    const boardY = this.activePiece.y + y;
+                    const boardX = this.activePiece.x + x;
+                    if (boardY >= 0) {
+                        this.grid[boardY][boardX] = this.activePiece.color;
                     }
-                    if (collision) break;
                 }
-                if (collision) {
-                    ghost.y--;
-                    return ghost.y;
-                }
-            }
+            });
+        });
+
+        // Check for Game Over (Top row occupied)
+        if (this.grid[0].some(cell => cell !== 0)) {
+            this.isGameOver = true;
+            document.getElementById('overlay-title').innerText = "GAME OVER";
+            document.getElementById('overlay-message').innerText = `Score: ${this.score}`;
+            document.getElementById('start-btn').innerText = "RESTART";
+            document.getElementById('overlay').classList.remove('hidden');
+            return;
         }
 
-        draw() {
-            this.renderer.clear();
-            this.renderer.drawGrid(this.grid);
+        this.checkLines();
+        this.spawnPiece();
+    }
 
-            // Draw Ghost Piece
-            const ghostY = this.getGhostY();
-            const ghostPiece = this.activePiece.clone();
-            ghostPiece.y = ghostY;
-            ghostPiece.color = 'rgba(255, 255, 255, 0.2)'; // Semi-transparent white
-            this.renderer.drawTetromino(ghostPiece);
+    /**
+     * Single Player Game Logic
+     * Note: This game runs entirely client-side. Multiple users on the same URL
+     * play independent instances of the game. No multiplayer synchronization.
+     */
+    checkLines() {
+        // Identify full rows first
+        const fullRowIndices = [];
+        this.grid.forEach((row, y) => {
+            if (row.every(cell => cell !== 0)) {
+                fullRowIndices.push(y);
+            }
+        });
 
-            this.renderer.drawTetromino(this.activePiece);
-            this.renderer.drawNextQueue(this.nextQueue);
-            this.renderer.drawHoldPiece(this.holdPieceType);
-        }
+        const linesCleared = fullRowIndices.length;
 
-        loop(time = 0) {
-            try {
-                const deltaTime = time - this.lastTime;
-                this.lastTime = time;
+        if (linesCleared > 0) {
+            // Effects
+            fullRowIndices.forEach(y => {
+                for (let x = 0; x < 10; x++) {
+                    this.renderer.createParticles(x, y, '#ffffff', 10);
+                }
+            });
 
-                this.update(deltaTime);
-                this.draw();
-            } catch (error) {
-                console.error("Game Loop Error:", error);
-                // Attempt to recover by not stopping the loop, 
-                // but maybe we should reset lastTime to avoid huge delta
-                this.lastTime = performance.now();
+            // Rebuild grid: Keep non-full rows
+            const newGrid = this.grid.filter((row, index) => !fullRowIndices.includes(index));
+
+            // Add new empty rows at the top
+            while (newGrid.length < 20) {
+                newGrid.unshift(Array(10).fill(0));
             }
 
-            requestAnimationFrame(this.loop);
+            this.grid = newGrid;
+
+            this.lines += linesCleared;
+            this.updateScore(linesCleared);
+            this.updateLevel();
         }
     }
+
+    updateScore(linesCleared) {
+        let points = 0;
+        let text = "";
+        let color = "#ffffff";
+
+        const basePoints = [0, 100, 300, 500, 800];
+        points = basePoints[linesCleared] * this.level;
+        if (linesCleared === 4) {
+            text = "TETRIS";
+            color = "#00f0ff";
+        } else if (linesCleared > 0) {
+            text = ["", "SINGLE", "DOUBLE", "TRIPLE"][linesCleared];
+        }
+
+        if (text) {
+            this.renderer.createFloatingText(this.activePiece.x + 1, this.activePiece.y, text, color);
+        }
+
+        this.score += points;
+
+        document.getElementById('score').innerText = this.score;
+        document.getElementById('lines').innerText = this.lines;
+    }
+
+    updateLevel() {
+        this.level = Math.floor(this.lines / 10) + 1;
+        document.getElementById('level').innerText = this.level;
+
+        // Speed up gravity
+        this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 100);
+        // Simple linear speedup for now, can use standard curve later
+    }
+
+    update(deltaTime) {
+        if (this.isPaused || this.isGameOver) return;
+
+        this.dropCounter += deltaTime;
+        if (this.dropCounter > this.dropInterval) {
+            this.activePiece.y++;
+            if (this.checkCollision()) {
+                this.activePiece.y--;
+                // Touched ground
+            } else {
+                this.dropCounter = 0;
+            }
+        }
+
+        // Lock Delay Logic
+        // Check if piece is on ground
+        this.activePiece.y++;
+        const onGround = this.checkCollision();
+        this.activePiece.y--;
+
+        if (onGround) {
+            if (!this.isLocking) {
+                this.isLocking = true;
+                this.lockTimer = 0;
+            }
+            this.lockTimer += deltaTime;
+            if (this.lockTimer > this.lockDelay) {
+                this.lockPiece();
+            }
+        } else {
+            this.isLocking = false;
+        }
+    }
+
+    getGhostY() {
+        const ghost = this.activePiece.clone();
+        while (true) {
+            ghost.y++;
+            // Check collision for ghost
+            let collision = false;
+            for (let y = 0; y < ghost.shape.length; y++) {
+                for (let x = 0; x < ghost.shape[y].length; x++) {
+                    if (ghost.shape[y][x] !== 0) {
+                        const boardX = ghost.x + x;
+                        const boardY = ghost.y + y;
+                        if (boardX < 0 || boardX >= 10 || boardY >= 20 || (boardY >= 0 && this.grid[boardY][boardX] !== 0)) {
+                            collision = true;
+                            break;
+                        }
+                    }
+                }
+                if (collision) break;
+            }
+            if (collision) {
+                ghost.y--;
+                return ghost.y;
+            }
+        }
+    }
+
+    draw() {
+        this.renderer.clear();
+        this.renderer.drawGrid(this.grid);
+
+        // Draw Ghost Piece
+        const ghostY = this.getGhostY();
+        const ghostPiece = this.activePiece.clone();
+        ghostPiece.y = ghostY;
+        ghostPiece.color = 'rgba(255, 255, 255, 0.2)'; // Semi-transparent white
+        this.renderer.drawTetromino(ghostPiece);
+
+        this.renderer.drawTetromino(this.activePiece);
+        this.renderer.drawNextQueue(this.nextQueue);
+        this.renderer.drawHoldPiece(this.holdPieceType);
+    }
+
+    loop(time = 0) {
+        try {
+            const deltaTime = time - this.lastTime;
+            this.lastTime = time;
+
+            this.update(deltaTime);
+            this.draw();
+        } catch (error) {
+            console.error("Game Loop Error:", error);
+            // Attempt to recover by not stopping the loop, 
+            // but maybe we should reset lastTime to avoid huge delta
+            this.lastTime = performance.now();
+        }
+
+        requestAnimationFrame(this.loop);
+    }
+}
