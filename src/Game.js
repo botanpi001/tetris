@@ -458,11 +458,18 @@ export class Game {
     }
 
     loop(time = 0) {
-        const deltaTime = time - this.lastTime;
-        this.lastTime = time;
+        try {
+            const deltaTime = time - this.lastTime;
+            this.lastTime = time;
 
-        this.update(deltaTime);
-        this.draw();
+            this.update(deltaTime);
+            this.draw();
+        } catch (error) {
+            console.error("Game Loop Error:", error);
+            // Attempt to recover by not stopping the loop, 
+            // but maybe we should reset lastTime to avoid huge delta
+            this.lastTime = performance.now();
+        }
 
         requestAnimationFrame(this.loop);
     }

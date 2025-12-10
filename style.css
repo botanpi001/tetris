@@ -22,6 +22,30 @@
     padding: 0;
 }
 
+:root {
+    --bg-color: #0a0a12;
+    --panel-bg: rgba(255, 255, 255, 0.05);
+    --text-color: #ffffff;
+    --accent-color: #00f0ff;
+    --grid-line-color: rgba(255, 255, 255, 0.1);
+    --font-main: 'Outfit', sans-serif;
+
+    /* Tetromino Colors */
+    --color-i: #00f0ff;
+    --color-j: #0000ff;
+    --color-l: #ff7f00;
+    --color-o: #ffff00;
+    --color-s: #00ff00;
+    --color-t: #a000f0;
+    --color-z: #ff0000;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -41,6 +65,25 @@ body {
     height: 100%;
     display: flex;
     flex-direction: row;
+
+    /* Columns */
+    .col-left,
+    .col-right {
+        display: flex;
+        flex-direction: column;
+        /* Revert to bottom alignment */
+        justify-content: flex-end;
+        align-items: center;
+
+        /* Robust Fixed Width */
+        flex: 0 0 90px;
+        width: 90px;
+
+        height: 100%;
+        padding-bottom: 20px;
+        /* Default padding */
+        z-index: 10;
+    }
 
     .col-center {
         display: flex;
@@ -264,6 +307,9 @@ body {
             flex: 0 0 70px;
             /* Reduce width */
             width: 70px;
+
+            /* Lift buttons for mobile taskbar */
+            padding-bottom: 80px;
         }
 
         .panel-box,
@@ -287,3 +333,4 @@ body {
             font-size: 0.6rem;
         }
     }
+}
