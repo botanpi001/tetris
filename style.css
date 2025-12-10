@@ -22,35 +22,13 @@
     padding: 0;
 }
 
-:root {
-    --bg-color: #0a0a12;
-    --panel-bg: rgba(255, 255, 255, 0.05);
-    --text-color: #ffffff;
-    --accent-color: #00f0ff;
-    --grid-line-color: rgba(255, 255, 255, 0.1);
-    --font-main: 'Outfit', sans-serif;
-
-    /* Tetromino Colors */
-    --color-i: #00f0ff;
-    --color-j: #0000ff;
-    --color-l: #ff7f00;
-    --color-o: #ffff00;
-    --color-s: #00ff00;
-    --color-t: #a000f0;
-    --color-z: #ff0000;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-main);
     height: 100vh;
+    height: 100dvh;
+    /* Mobile fix */
     width: 100vw;
     display: flex;
     justify-content: center;
@@ -65,272 +43,279 @@ body {
     height: 100%;
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px;
+}
 
-    /* Columns */
+/* Columns */
+.col-left,
+.col-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    /* Align to bottom */
+    align-items: center;
+
+    /* Robust Fixed Width */
+    flex: 0 0 90px;
+    width: 90px;
+
+    height: 100%;
+    padding-bottom: 20px;
+    /* Default padding */
+    z-index: 10;
+}
+
+.col-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    /* Fill remaining space */
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.control-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+/* Game Board */
+.game-board-wrapper {
+    position: relative;
+    /* Silver Border & Stylish Background */
+    border: 2px solid silver;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+    background: linear-gradient(to bottom, #1a1a40, #0d0d20);
+
+    /* Responsive sizing: Fill width but maintain aspect ratio */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 2;
+    /* Enforce 1:2 ratio */
+
+    /* Constraints */
+    max-height: 95vh;
+    max-height: 95dvh;
+    max-width: 47.5vh;
+    max-width: 47.5dvh;
+
+    /* Center it */
+    margin: 0 auto;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Score Display */
+.score-display {
+    position: absolute;
+    top: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Panels (Hold/Next) */
+.panel-box {
+    background: var(--panel-bg);
+    padding: 5px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 5px;
+    width: 80px;
+}
+
+.panel-box h2 {
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+/* Buttons */
+.control-btn,
+.panel-btn {
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    touch-action: manipulation;
+    transition: transform 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.control-btn:active,
+.panel-btn:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+/* Hold Panel Button Style */
+.panel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 5px;
+    width: 80px;
+    height: auto;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.panel-btn h2 {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-bottom: 2px;
+}
+
+.secondary-btn {
+    border-radius: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: bold;
+    font-size: 0.7rem;
+    width: 60px;
+    height: 50px;
+}
+
+/* Preschooler Friendly Colors & Sizes */
+.move-btn {
+    width: 75px;
+    height: 75px;
+    background: #00bfff;
+    border: 3px solid #009acd;
+}
+
+.drop-btn {
+    width: 75px;
+    height: 75px;
+    background: #ff4500;
+    border: 3px solid #cd3700;
+}
+
+.rot-btn {
+    width: 70px;
+    height: 70px;
+    background: #32cd32;
+    border: 3px solid #228b22;
+}
+
+/* Overlay */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#overlay-title {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--accent-color);
+}
+
+#start-btn {
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 30px;
+}
+
+/* Responsive Adjustments for very small screens */
+@media (max-width: 360px) {
+
     .col-left,
     .col-right {
-        display: flex;
-        flex-direction: column;
-        /* Revert to bottom alignment */
-        justify-content: flex-end;
-        align-items: center;
-
-        /* Robust Fixed Width */
-        flex: 0 0 90px;
-        width: 90px;
-
-        height: 100%;
-        padding-bottom: 20px;
-        /* Default padding */
-        z-index: 10;
+        width: 70px;
+        min-width: 70px;
     }
 
-    .col-center {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-
-        /* Fill remaining space */
-        flex: 1 1 auto;
-        width: 100%;
-        height: 100%;
-        position: relative;
-    }
-
-    .control-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: center;
-        width: 100%;
-    }
-
-    /* Game Board */
-    .game-board-wrapper {
-        position: relative;
-        /* Silver Border & Stylish Background */
-        border: 2px solid silver;
-        border-radius: 4px;
-        box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
-        background: linear-gradient(to bottom, #1a1a40, #0d0d20);
-
-        /* Responsive sizing: Fill width but maintain aspect ratio */
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1 / 2;
-        /* Enforce 1:2 ratio */
-
-        /* Constraints */
-        max-height: 95vh;
-        max-width: 47.5vh;
-
-        /* Center it */
-        margin: 0 auto;
-    }
-
-    #game-canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-    }
-
-    /* Score Display */
-    .score-display {
-        position: absolute;
-        top: 10px;
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--accent-color);
-        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-        z-index: 5;
-        pointer-events: none;
-    }
-
-    /* Panels (Hold/Next) */
-    .panel-box {
-        background: var(--panel-bg);
-        padding: 5px;
-        border-radius: 10px;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        margin-bottom: 5px;
-        width: 80px;
-    }
-
-    .panel-box h2 {
-        font-size: 0.7rem;
-        color: #888;
-        margin-bottom: 2px;
-    }
-
-    /* Buttons */
-    .control-btn,
+    .panel-box,
     .panel-btn {
-        border: none;
-        border-radius: 50%;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        touch-action: manipulation;
-        transition: transform 0.1s;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+        width: 65px;
     }
 
-    .control-btn:active,
-    .panel-btn:active {
-        transform: translateY(4px);
-        box-shadow: none;
-    }
-
-    /* Hold Panel Button Style */
-    .panel-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 5px;
-        width: 80px;
-        height: auto;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .panel-btn h2 {
-        font-size: 0.7rem;
-        color: #aaa;
-        margin-bottom: 2px;
-    }
-
-    .secondary-btn {
-        border-radius: 15px;
-        padding: 10px;
-        background: rgba(255, 255, 255, 0.15);
-        font-weight: bold;
-        font-size: 0.7rem;
-        width: 60px;
-        height: 50px;
-    }
-
-    /* Preschooler Friendly Colors & Sizes */
-    .move-btn {
-        width: 75px;
-        height: 75px;
-        background: #00bfff;
-        border: 3px solid #009acd;
-    }
-
+    .move-btn,
     .drop-btn {
-        width: 75px;
-        height: 75px;
-        background: #ff4500;
-        border: 3px solid #cd3700;
+        width: 60px;
+        height: 60px;
     }
 
     .rot-btn {
+        width: 55px;
+        height: 55px;
+    }
+}
+
+/* Responsive Adjustments for Mobile */
+@media (max-width: 600px) {
+
+    .col-left,
+    .col-right {
+        flex: 0 0 70px;
+        /* Reduce width */
         width: 70px;
-        height: 70px;
-        background: #32cd32;
-        border: 3px solid #228b22;
+
+        /* Lift buttons for mobile taskbar */
+        /* Since we use 100dvh, the bottom is the true bottom above the address bar */
+        /* We add padding to ensure buttons aren't flush with the edge */
+        padding-bottom: 40px;
     }
 
-    /* Overlay */
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 20;
-        transition: opacity 0.3s ease;
+    .panel-box,
+    .panel-btn {
+        width: 65px;
     }
 
-    .overlay.hidden {
-        opacity: 0;
-        pointer-events: none;
+    .move-btn,
+    .drop-btn {
+        width: 60px;
+        height: 60px;
     }
 
-    #overlay-title {
-        font-size: 2rem;
-        margin-bottom: 10px;
-        color: var(--accent-color);
+    .rot-btn {
+        width: 55px;
+        height: 55px;
     }
 
-    #start-btn {
-        background: var(--accent-color);
-        color: #000;
-        border: none;
-        padding: 15px 30px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        border-radius: 30px;
-    }
-
-    /* Responsive Adjustments for very small screens */
-    @media (max-width: 360px) {
-
-        .col-left,
-        .col-right {
-            width: 70px;
-            min-width: 70px;
-        }
-
-        .panel-box,
-        .panel-btn {
-            width: 65px;
-        }
-
-        .move-btn,
-        .drop-btn {
-            width: 60px;
-            height: 60px;
-        }
-
-        .rot-btn {
-            width: 55px;
-            height: 55px;
-        }
-    }
-
-    /* Responsive Adjustments for Mobile */
-    @media (max-width: 600px) {
-
-        .col-left,
-        .col-right {
-            flex: 0 0 70px;
-            /* Reduce width */
-            width: 70px;
-
-            /* Lift buttons for mobile taskbar */
-            padding-bottom: 80px;
-        }
-
-        .panel-box,
-        .panel-btn {
-            width: 65px;
-        }
-
-        .move-btn,
-        .drop-btn {
-            width: 60px;
-            height: 60px;
-        }
-
-        .rot-btn {
-            width: 55px;
-            height: 55px;
-        }
-
-        .secondary-btn {
-            width: 50px;
-            font-size: 0.6rem;
-        }
+    .secondary-btn {
+        width: 50px;
+        font-size: 0.6rem;
     }
 }
