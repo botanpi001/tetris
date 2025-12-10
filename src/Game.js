@@ -316,28 +316,63 @@ export class Game {
         return corners >= 3;
     }
 
+    /**
+     * Single Player Game Logic
+     * Note: This game runs entirely client-side. Multiple users on the same URL
+     * play independent instances of the game. No multiplayer synchronization.
+     */
     checkLines(tSpin) {
         let linesCleared = 0;
+        const rowsToClear = [];
 
-        for (let y = this.grid.length - 1; y >= 0; y--) {
+        // Pass 1: Identify full rows
+        for (let y = 0; y < this.rows; y++) {
             if (this.grid[y].every(cell => cell !== 0)) {
-                this.grid.splice(y, 1);
-                this.grid.unshift(Array(10).fill(0));
-                linesCleared++;
-
-                // Line clear effect (approximate y location)
-                for (let x = 0; x < 10; x++) {
-                    this.renderer.createParticles(x, y, '#ffffff', 10);
-                }
-
-                y++; // Check same row index again since we shifted down
+                rowsToClear.push(y);
             }
         }
 
-        if (linesCleared > 0 || tSpin) {
+        // Use this.grid.length if this.rows is not defined on Game instance (it's on Renderer)
+        // Actually Game constructor defines grid as Array(20), so length is 20.
+        // Let's use this.grid loop safely.
+    }
+
+    // RE-WRITING checkLines correctly below to replace the existing one
+    checkLines(tSpin) {
+        // Identify full rows first
+        const fullRowIndices = [];
+        this.grid.forEach((row, y) => {
+            if (row.every(cell => cell !== 0)) {
+                fullRowIndices.push(y);
+            }
+        });
+
+        const linesCleared = fullRowIndices.length;
+
+        if (linesCleared > 0) {
+            // Effects
+            fullRowIndices.forEach(y => {
+                for (let x = 0; x < 10; x++) {
+                    this.renderer.createParticles(x, y, '#ffffff', 10);
+                }
+            });
+
+            // Rebuild grid: Keep non-full rows
+            const newGrid = this.grid.filter((row, index) => !fullRowIndices.includes(index));
+
+            // Add new empty rows at the top
+            while (newGrid.length < 20) {
+                newGrid.unshift(Array(10).fill(0));
+            }
+
+            this.grid = newGrid;
+
             this.lines += linesCleared;
             this.updateScore(linesCleared, tSpin);
             this.updateLevel();
+        } else if (tSpin) {
+            // T-Spin with no lines
+            this.updateScore(0, tSpin);
         }
     }
 
